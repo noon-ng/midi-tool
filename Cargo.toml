@@ -1,0 +1,11 @@
+[package]
+name = "midi-tool"
+version = "0.1.0"
+edition = "2021"
+default-run = "midi-tool"
+authors = ["Nuno Correia <noon-ng@users.noreply.github.com>"]
+license = "MIT"
+
+[dependencies]
+clap = { version = "4.5.27", features = ["derive"] }
+midir = "0.10.1"
