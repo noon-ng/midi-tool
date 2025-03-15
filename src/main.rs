@@ -1,9 +1,8 @@
 use clap::{Parser, Subcommand};
-use midir::{MidiInput, MidiOutput};
 use std::fmt::Display;
 
 mod midi;
-use midi::{Devices, Route};
+use midi::Devices;
 
 /// MIDI CLI tool
 #[derive(Parser)]
@@ -30,7 +29,7 @@ enum Commands {
 }
 
 #[derive(Debug)]
-enum Errors {
+pub enum Errors {
     InitFailure,
     InvalidInputPort(String),
     InvalidOutputPort(String),
@@ -51,10 +50,7 @@ impl Display for Errors {
 fn main() -> Result<(), Errors> {
     let args = Args::parse();
 
-    let devices = Devices::new(
-        MidiInput::new("MIDI Input").map_err(|_| Errors::InitFailure)?,
-        MidiOutput::new("MIDI Output").map_err(|_| Errors::InitFailure)?,
-    );
+    let devices = Devices::new()?;
 
     match args.command {
         Commands::List => devices.print(),
@@ -62,19 +58,7 @@ fn main() -> Result<(), Errors> {
             source_name,
             target_name,
         } => {
-            let Some(target) = devices.find_output_port(&target_name) else {
-                return Err(Errors::InvalidOutputPort(target_name.to_string()));
-            };
-
-            let Some(source) = devices.find_input_port(&source_name) else {
-                return Err(Errors::InvalidInputPort(source_name.to_string()));
-            };
-
-            let route = Route::new(source, target);
-
-            devices
-                .activate(route)
-                .map_err(|_| Errors::ForwardingError)?;
+            devices.route(source_name.to_string(), target_name.to_string())?;
         }
     }
 
