@@ -1,5 +1,4 @@
 use clap::{Parser, Subcommand};
-use midir::{MidiInput, MidiOutput};
 use std::fmt::Display;
 
 mod midi;
@@ -30,7 +29,7 @@ enum Commands {
 }
 
 #[derive(Debug)]
-enum Errors {
+pub enum Errors {
     InitFailure,
     InvalidInputPort(String),
     InvalidOutputPort(String),
@@ -51,10 +50,7 @@ impl Display for Errors {
 fn main() -> Result<(), Errors> {
     let args = Args::parse();
 
-    let devices = Devices::new(
-        MidiInput::new("MIDI Input").map_err(|_| Errors::InitFailure)?,
-        MidiOutput::new("MIDI Output").map_err(|_| Errors::InitFailure)?,
-    );
+    let devices = Devices::new()?;
 
     match args.command {
         Commands::List => devices.print(),

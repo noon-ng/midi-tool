@@ -4,14 +4,19 @@ use std::io::stdin;
 
 use crate::Route;
 
+use crate::Errors;
+
 pub struct Devices {
     input: MidiInput,
     output: MidiOutput,
 }
 
 impl Devices {
-    pub fn new(input: MidiInput, output: MidiOutput) -> Self {
-        Self { input, output }
+    pub fn new() -> Result<Self, Errors> {
+        match (MidiInput::new("MIDI Input"), MidiOutput::new("MIDI Output")) {
+            (Ok(input), Ok(output)) => Ok(Self { input, output }),
+            _ => Err(Errors::InitFailure),
+        }
     }
 
     pub fn find_input_port(&self, port_name: &str) -> Option<MidiInputPort> {
