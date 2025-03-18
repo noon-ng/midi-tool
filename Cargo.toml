@@ -1,7 +1,7 @@
 [package]
 name = "midi-tool"
-version = "0.1.0"
-edition = "2021"
+version = "0.1.1"
+edition = "2024"
 default-run = "midi-tool"
 authors = ["Nuno Correia <noon-ng@users.noreply.github.com>"]
 license = "MIT"
