@@ -25,6 +25,10 @@ enum Commands {
         /// Input port name
         #[arg(short, long)]
         source_name: String,
+
+        /// Also print messages sent to the output.
+        #[arg(short, long)]
+        verbose: bool,
     },
 
     /// Monitor incoming MIDI messages.
@@ -40,7 +44,7 @@ pub enum Errors {
     InitFailure,
     InvalidInputPort(String),
     InvalidOutputPort(String),
-    ForwardingError,
+    ForwardingError(String),
 }
 
 impl Display for Errors {
@@ -49,7 +53,9 @@ impl Display for Errors {
             Errors::InitFailure => write!(f, "Failed to initialize MIDI devices"),
             Errors::InvalidInputPort(port) => write!(f, "Invalid input port: {}", port),
             Errors::InvalidOutputPort(port) => write!(f, "Invalid output port: {}", port),
-            Errors::ForwardingError => write!(f, "Failed to forward MIDI messages"),
+            Errors::ForwardingError(message) => {
+                write!(f, "Failed to forward MIDI messages: {}", message)
+            }
         }
     }
 }
@@ -64,8 +70,9 @@ fn main() -> Result<(), Errors> {
         Commands::Route {
             source_name,
             target_name,
+            verbose,
         } => {
-            devices.route(source_name, target_name)?;
+            devices.route(source_name, target_name, verbose)?;
         }
         Commands::Monitor { source_name } => {
             devices.monitor(source_name)?;
