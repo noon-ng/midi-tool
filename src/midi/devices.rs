@@ -58,9 +58,7 @@ impl Devices {
             .find_input_port(&source_name)
             .ok_or(Errors::InvalidInputPort(source_name))?;
 
-        let route = Route { source, target };
-
-        match self.activate(route) {
+        match self.activate(Route { source, target }) {
             Ok(_) => Ok(()),
             Err(_) => Err(Errors::ForwardingError),
         }
@@ -87,7 +85,31 @@ impl Devices {
             (),
         )?;
 
-        stdin().read_line(&mut String::new())?;
+        stdin().read_line(&mut String::new()).ok();
+        Ok(())
+    }
+
+    pub fn monitor(mut self, source_name: String) -> Result<(), Errors> {
+        self.input.ignore(Ignore::None);
+
+        let source = self
+            .find_input_port(&source_name)
+            .ok_or(Errors::InvalidInputPort(source_name))?;
+
+        // Debug prints in the callback
+        let _connection = self
+            .input
+            .connect(
+                &source,
+                "midi-router",
+                move |_stamp, message, _| {
+                    println!("Received message: {:?}", message);
+                },
+                (),
+            )
+            .ok();
+
+        stdin().read_line(&mut String::new()).ok();
         Ok(())
     }
 

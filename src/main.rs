@@ -26,6 +26,13 @@ enum Commands {
         #[arg(short, long)]
         source_name: String,
     },
+
+    /// Monitor incoming MIDI messages.
+    Monitor {
+        /// Input port name
+        #[arg(short, long)]
+        source_name: String,
+    },
 }
 
 #[derive(Debug)]
@@ -58,7 +65,10 @@ fn main() -> Result<(), Errors> {
             source_name,
             target_name,
         } => {
-            devices.route(source_name.to_string(), target_name.to_string())?;
+            devices.route(source_name, target_name)?;
+        }
+        Commands::Monitor { source_name } => {
+            devices.monitor(source_name)?;
         }
     }
 
