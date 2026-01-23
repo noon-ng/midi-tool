@@ -2,7 +2,7 @@ use clap::{Parser, Subcommand};
 use std::fmt::Display;
 
 mod midi;
-use midi::Devices;
+use midi::devices;
 
 /// MIDI CLI tool
 #[derive(Parser)]
@@ -63,21 +63,13 @@ impl Display for Errors {
 fn main() -> Result<(), Errors> {
     let args = Args::parse();
 
-    let devices = Devices::new()?;
-
     match args.command {
-        Commands::List => devices.print(),
+        Commands::List => devices::print(),
         Commands::Route {
             source_name,
             target_name,
             verbose,
-        } => {
-            devices.route(source_name, target_name, verbose)?;
-        }
-        Commands::Monitor { source_name } => {
-            devices.monitor(source_name)?;
-        }
+        } => devices::route(source_name, target_name, verbose),
+        Commands::Monitor { source_name } => devices::monitor(source_name),
     }
-
-    Ok(())
 }
