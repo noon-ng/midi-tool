@@ -32,7 +32,7 @@ impl Target for OutputTarget {
     fn connect(self: Box<Self>, output: MidiOutput) -> Result<Box<dyn Outgoing + Send>, Errors> {
         let connection = output
             .connect(&self.port, "midi-router")
-            .map_err(forwarding_error)?;
+            .map_err(|err| Errors::ForwardingError(err.to_string()))?;
         Ok(Box::new(MidiOutgoing { connection }))
     }
 }
@@ -176,8 +176,4 @@ fn print_monitor_line(label: &str, message: &[u8], last_len: usize) -> usize {
     print!("\r{}", line);
     std::io::stdout().flush().ok();
     line.len()
-}
-
-fn forwarding_error<E: std::fmt::Display>(err: E) -> Errors {
-    Errors::ForwardingError(err.to_string())
 }
