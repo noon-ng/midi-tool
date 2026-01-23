@@ -9,7 +9,7 @@ pub(crate) trait Outgoing: Send {
 }
 
 pub(crate) trait Target {
-    fn describe(&self) -> String;
+    fn describe(&self) -> Option<String>;
     fn connect(self: Box<Self>, output: MidiOutput) -> Result<Box<dyn Outgoing + Send>, Errors>;
 }
 
@@ -25,8 +25,8 @@ impl OutputTarget {
 }
 
 impl Target for OutputTarget {
-    fn describe(&self) -> String {
-        self.name.to_string()
+    fn describe(&self) -> Option<String> {
+        Some(self.name.to_string())
     }
 
     fn connect(self: Box<Self>, output: MidiOutput) -> Result<Box<dyn Outgoing + Send>, Errors> {
@@ -38,18 +38,18 @@ impl Target for OutputTarget {
 }
 
 pub(crate) struct MonitorTarget {
-    label: &'static str,
+    label: String,
 }
 
 impl MonitorTarget {
-    pub(crate) fn new(label: &'static str) -> Self {
+    pub(crate) fn new(label: String) -> Self {
         Self { label }
     }
 }
 
 impl Target for MonitorTarget {
-    fn describe(&self) -> String {
-        self.label.to_string()
+    fn describe(&self) -> Option<String> {
+        None
     }
 
     fn connect(self: Box<Self>, _output: MidiOutput) -> Result<Box<dyn Outgoing + Send>, Errors> {
@@ -74,7 +74,7 @@ struct MonitorOutgoing {
 }
 
 impl MonitorOutgoing {
-    fn new(label: &'static str) -> Self {
+    fn new(label: String) -> Self {
         let (tx, rx) = mpsc::channel::<Vec<u8>>();
         let label = label.to_string();
         thread::spawn(move || {

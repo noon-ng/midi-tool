@@ -9,9 +9,9 @@ pub fn print() -> Result<(), Errors> {
     let output = MidiOutput::new("midi-tool").map_err(|_| Errors::InitFailure)?;
 
     if input.ports().len() == 0 {
-        println!("No input ports found.");
+        println!("No source ports found.");
     } else {
-        println!("Input ports: ");
+        println!("Source ports: ");
 
         input.ports().iter().enumerate().for_each(|(i, port)| {
             let name = input
@@ -22,9 +22,9 @@ pub fn print() -> Result<(), Errors> {
     }
 
     if output.ports().len() == 0 {
-        println!("No output ports found.");
+        println!("No target ports found.");
     } else {
-        println!("Output ports: ");
+        println!("Target ports: ");
 
         output.ports().iter().enumerate().for_each(|(i, port)| {
             let name = output
@@ -44,7 +44,7 @@ pub fn route(source_name: String, target_name: String, verbose: bool) -> Result<
     let targets: Vec<Box<dyn Target>> = if verbose {
         vec![
             Box::new(OutputTarget::new(target_name, target)),
-            Box::new(MonitorTarget::new("<monitor>")),
+            Box::new(MonitorTarget::new(source_name.to_string())),
         ]
     } else {
         vec![Box::new(OutputTarget::new(target_name, target))]
@@ -52,7 +52,7 @@ pub fn route(source_name: String, target_name: String, verbose: bool) -> Result<
 
     let target_names: String = targets
         .iter()
-        .map(|target| target.describe())
+        .filter_map(|target| target.describe())
         .collect::<Vec<String>>()
         .join(", ");
 
@@ -70,7 +70,7 @@ pub fn monitor(source_name: String) -> Result<(), Errors> {
 
     Route {
         source,
-        targets: vec![Box::new(MonitorTarget::new("incoming"))],
+        targets: vec![Box::new(MonitorTarget::new(source_name.to_string()))],
     }
     .activate()
 }
