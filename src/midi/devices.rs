@@ -4,130 +4,93 @@ use crate::Errors;
 use crate::midi::route::Route;
 use crate::midi::target::{MonitorTarget, OutputTarget, Target};
 
-pub struct Devices {
-    input: MidiInput,
+pub fn print() -> Result<(), Errors> {
+    let input = MidiInput::new("midi-tool").map_err(|_| Errors::InitFailure)?;
+    let output = MidiOutput::new("midi-tool").map_err(|_| Errors::InitFailure)?;
+
+    if input.ports().len() == 0 {
+        println!("No input ports found.");
+    } else {
+        println!("Input ports: ");
+
+        input.ports().iter().enumerate().for_each(|(i, port)| {
+            let name = input
+                .port_name(port)
+                .unwrap_or_else(|_| "<unknown>".to_string());
+            println!("{}: {}", i, name)
+        });
+    }
+
+    if output.ports().len() == 0 {
+        println!("No output ports found.");
+    } else {
+        println!("Output ports: ");
+
+        output.ports().iter().enumerate().for_each(|(i, port)| {
+            let name = output
+                .port_name(port)
+                .unwrap_or_else(|_| "<unknown>".to_string());
+            println!("{}: {}", i, name)
+        });
+    }
+
+    Ok(())
 }
 
-impl Devices {
-    pub fn new() -> Result<Self, Errors> {
-        match MidiInput::new("MIDI Input") {
-            Ok(input) => Ok(Self { input }),
-            _ => Err(Errors::InitFailure),
-        }
+pub fn route(source_name: String, target_name: String, verbose: bool) -> Result<(), Errors> {
+    let source = find_input_port(&source_name)?;
+    let target = find_output_port(&target_name)?;
+
+    let targets: Vec<Box<dyn Target>> = if verbose {
+        vec![
+            Box::new(OutputTarget::new(target_name, target)),
+            Box::new(MonitorTarget::new("<monitor>")),
+        ]
+    } else {
+        vec![Box::new(OutputTarget::new(target_name, target))]
+    };
+
+    let target_names: String = targets
+        .iter()
+        .map(|target| target.describe())
+        .collect::<Vec<String>>()
+        .join(", ");
+
+    println!("Activating route:");
+    println!("  Source: {}", source_name);
+    println!("  Target(s): {}", target_names);
+
+    Route { source, targets }.activate()
+}
+
+pub fn monitor(source_name: String) -> Result<(), Errors> {
+    let source = find_input_port(&source_name)?;
+
+    println!("Monitoring source port: {}", source_name);
+
+    Route {
+        source,
+        targets: vec![Box::new(MonitorTarget::new("incoming"))],
     }
+    .activate()
+}
 
-    pub fn print(&self) {
-        match self.input.ports().len() {
-            0 => println!("No input ports found."),
-            _ => {
-                println!("Input ports: ");
+fn find_input_port(port_name: &str) -> Result<MidiInputPort, Errors> {
+    let input = MidiInput::new("midi-tool").map_err(|_| Errors::InitFailure)?;
 
-                self.input.ports().iter().enumerate().for_each(|(i, port)| {
-                    let name = self
-                        .input
-                        .port_name(port)
-                        .unwrap_or_else(|_| "<unknown>".to_string());
-                    println!("{}: {}", i, name)
-                });
-            }
-        }
+    input
+        .ports()
+        .into_iter()
+        .find(|port| input.port_name(port) == Ok(port_name.to_string()))
+        .ok_or(Errors::InvalidInputPort(port_name.to_string()))
+}
 
-        match MidiOutput::new("MIDI Output") {
-            Ok(output) => match output.ports().len() {
-                0 => println!("No output ports found."),
-                _ => {
-                    println!("Output ports: ");
+fn find_output_port(port_name: &str) -> Result<MidiOutputPort, Errors> {
+    let output = MidiOutput::new("midi-tool").map_err(|_| Errors::InitFailure)?;
 
-                    output.ports().iter().enumerate().for_each(|(i, port)| {
-                        let name = output
-                            .port_name(port)
-                            .unwrap_or_else(|_| "<unknown>".to_string());
-                        println!("{}: {}", i, name)
-                    });
-                }
-            },
-            _ => println!("Failed to initialize MIDI output."),
-        }
-    }
-
-    pub fn route(
-        self,
-        source_name: String,
-        target_name: String,
-        verbose: bool,
-    ) -> Result<(), Errors> {
-        let source = self
-            .find_input_port(&source_name)
-            .ok_or(Errors::InvalidInputPort(source_name))?;
-
-        let output = MidiOutput::new("MIDI Output").map_err(|_| Errors::InitFailure)?;
-        let target = Self::find_output_port(&output, &target_name)
-            .ok_or(Errors::InvalidOutputPort(target_name))?;
-
-        let mut targets: Vec<Box<dyn Target>> = vec![Box::new(OutputTarget::new(target))];
-        if verbose {
-            targets.push(Box::new(MonitorTarget::new("outgoing")));
-        }
-
-        let input_name = self
-            .input
-            .port_name(&source)
-            .map_err(Self::forwarding_error)?;
-
-        let mut output_names: Vec<String> = Vec::new();
-        for target in targets.iter() {
-            if let Some(name) = target.describe(&output)? {
-                output_names.push(name);
-            }
-        }
-
-        println!("Activating route:");
-        println!("  Input port: {}", input_name);
-        if output_names.is_empty() {
-            println!("  Output port: <none>");
-        } else {
-            println!("  Output port(s): {}", output_names.join(", "));
-        }
-
-        let Devices { input } = self;
-        Route { source, targets }.activate(input, output)
-    }
-
-    pub fn monitor(self, source_name: String) -> Result<(), Errors> {
-        let source = self
-            .find_input_port(&source_name)
-            .ok_or(Errors::InvalidInputPort(source_name))?;
-
-        let input_name = self
-            .input
-            .port_name(&source)
-            .map_err(Self::forwarding_error)?;
-        println!("Monitoring input port: {}", input_name);
-
-        let output = MidiOutput::new("MIDI Output").map_err(|_| Errors::InitFailure)?;
-        let Devices { input } = self;
-        Route {
-            source,
-            targets: vec![Box::new(MonitorTarget::new("incoming"))],
-        }
-        .activate(input, output)
-    }
-
-    fn find_input_port(&self, port_name: &str) -> Option<MidiInputPort> {
-        self.input
-            .ports()
-            .into_iter()
-            .find(|port| self.input.port_name(port) == Ok(port_name.to_string()))
-    }
-
-    fn find_output_port(output: &MidiOutput, port_name: &str) -> Option<MidiOutputPort> {
-        output
-            .ports()
-            .into_iter()
-            .find(|port| output.port_name(port) == Ok(port_name.to_string()))
-    }
-
-    fn forwarding_error<E: std::fmt::Display>(err: E) -> Errors {
-        Errors::ForwardingError(err.to_string())
-    }
+    output
+        .ports()
+        .into_iter()
+        .find(|port| output.port_name(port) == Ok(port_name.to_string()))
+        .ok_or(Errors::InvalidOutputPort(port_name.to_string()))
 }

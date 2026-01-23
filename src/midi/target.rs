@@ -9,24 +9,24 @@ pub(crate) trait Outgoing: Send {
 }
 
 pub(crate) trait Target {
-    fn describe(&self, output: &MidiOutput) -> Result<Option<String>, Errors>;
+    fn describe(&self) -> String;
     fn connect(self: Box<Self>, output: MidiOutput) -> Result<Box<dyn Outgoing + Send>, Errors>;
 }
 
 pub(crate) struct OutputTarget {
+    name: String,
     port: MidiOutputPort,
 }
 
 impl OutputTarget {
-    pub(crate) fn new(port: MidiOutputPort) -> Self {
-        Self { port }
+    pub(crate) fn new(name: String, port: MidiOutputPort) -> Self {
+        Self { name, port }
     }
 }
 
 impl Target for OutputTarget {
-    fn describe(&self, output: &MidiOutput) -> Result<Option<String>, Errors> {
-        let name = output.port_name(&self.port).map_err(forwarding_error)?;
-        Ok(Some(name))
+    fn describe(&self) -> String {
+        self.name.to_string()
     }
 
     fn connect(self: Box<Self>, output: MidiOutput) -> Result<Box<dyn Outgoing + Send>, Errors> {
@@ -48,8 +48,8 @@ impl MonitorTarget {
 }
 
 impl Target for MonitorTarget {
-    fn describe(&self, _output: &MidiOutput) -> Result<Option<String>, Errors> {
-        Ok(None)
+    fn describe(&self) -> String {
+        self.label.to_string()
     }
 
     fn connect(self: Box<Self>, _output: MidiOutput) -> Result<Box<dyn Outgoing + Send>, Errors> {
