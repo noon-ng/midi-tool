@@ -20,11 +20,11 @@ enum Commands {
     Route {
         /// Output port name
         #[arg(short, long)]
-        target_name: String,
+        target: String,
 
         /// Input port name
         #[arg(short, long)]
-        source_name: String,
+        source: String,
 
         /// Also print messages sent to the output.
         #[arg(short, long)]
@@ -35,7 +35,7 @@ enum Commands {
     Monitor {
         /// Input port name
         #[arg(short, long)]
-        source_name: String,
+        source: String,
     },
 }
 
@@ -66,10 +66,10 @@ fn main() -> std::process::ExitCode {
     if let Err(e) = match args.command {
         Commands::List => devices::print(),
         Commands::Route {
-            source_name,
-            target_name,
+            source,
+            target,
             verbose,
-        } => devices::route(source_name, target_name, verbose),
+        } => devices::route(source, target, verbose),
         Commands::Monitor { source } => devices::monitor(source),
     } {
         eprintln!("{}", e);
