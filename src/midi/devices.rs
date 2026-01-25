@@ -8,7 +8,7 @@ pub fn print() -> Result<(), Errors> {
     let input = MidiInput::new("midi-tool").map_err(|_| Errors::InitFailure)?;
     let output = MidiOutput::new("midi-tool").map_err(|_| Errors::InitFailure)?;
 
-    if input.ports().len() == 0 {
+    if input.ports().is_empty() {
         println!("No source ports found.");
     } else {
         println!("Source ports: ");
@@ -21,7 +21,7 @@ pub fn print() -> Result<(), Errors> {
         });
     }
 
-    if output.ports().len() == 0 {
+    if output.ports().is_empty() {
         println!("No target ports found.");
     } else {
         println!("Target ports: ");
