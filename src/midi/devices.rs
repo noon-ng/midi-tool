@@ -82,7 +82,7 @@ fn find_input_port(port_name: &str) -> Result<MidiInputPort, Errors> {
         .ports()
         .into_iter()
         .find(|port| input.port_name(port) == Ok(port_name.to_string()))
-        .ok_or(Errors::InvalidInputPort(port_name.to_string()))
+        .ok_or(Errors::InvalidSourcePort(port_name.to_string()))
 }
 
 fn find_output_port(port_name: &str) -> Result<MidiOutputPort, Errors> {
@@ -92,5 +92,5 @@ fn find_output_port(port_name: &str) -> Result<MidiOutputPort, Errors> {
         .ports()
         .into_iter()
         .find(|port| output.port_name(port) == Ok(port_name.to_string()))
-        .ok_or(Errors::InvalidOutputPort(port_name.to_string()))
+        .ok_or(Errors::InvalidTargetPort(port_name.to_string()))
 }
