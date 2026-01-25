@@ -38,6 +38,9 @@ I use this when producing and jamming, maybe come up with a little swiss
 knife type thing. Other than that, a few enhancements that I am
 considering at the moment - keeping in mind this is a learning project:
 
+- Port aliasing to work around platform-dependent MIDI port names, making
+  scripts portable across machines. See [docs/port-naming.md](docs/port-naming.md).
+
 - An interactive mode, with maybe a ncurses-based TUI (do people still
   use that these days?) where you can just navigate with the keyboard to
   create routings.
