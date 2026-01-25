@@ -37,34 +37,38 @@ pub fn print() -> Result<(), Errors> {
     Ok(())
 }
 
-pub fn route(source_name: String, target_name: String, verbose: bool) -> Result<(), Errors> {
-    let source = find_input_port(&source_name)?;
-    let target = find_output_port(&target_name)?;
+pub fn route(source: String, target: String, verbose: bool) -> Result<(), Errors> {
+    let source_port = find_source_port(&source)?;
+    let target_port = find_target_port(&target)?;
 
-    let targets: Vec<Box<dyn Target>> = if verbose {
+    let route_targets: Vec<Box<dyn Target>> = if verbose {
         vec![
-            Box::new(OutputTarget::new(target_name, target)),
-            Box::new(MonitorTarget::new(source_name.to_string())),
+            Box::new(OutputTarget::new(target, target_port)),
+            Box::new(MonitorTarget::new(source.to_string())),
         ]
     } else {
-        vec![Box::new(OutputTarget::new(target_name, target))]
+        vec![Box::new(OutputTarget::new(target, target_port))]
     };
 
-    let target_names: String = targets
+    let target_names: String = route_targets
         .iter()
         .filter_map(|target| target.describe())
         .collect::<Vec<String>>()
         .join(", ");
 
     println!("Activating route:");
-    println!("  Source: {}", source_name);
+    println!("  Source: {}", source);
     println!("  Target(s): {}", target_names);
 
-    Route { source, targets }.activate()
+    Route {
+        source: source_port,
+        targets: route_targets,
+    }
+    .activate()
 }
 
 pub fn monitor(source_name: String) -> Result<(), Errors> {
-    let source = find_input_port(&source_name)?;
+    let source = find_source_port(&source_name)?;
 
     println!("Monitoring source port: {}", source_name);
 
@@ -75,7 +79,7 @@ pub fn monitor(source_name: String) -> Result<(), Errors> {
     .activate()
 }
 
-fn find_input_port(port_name: &str) -> Result<MidiInputPort, Errors> {
+fn find_source_port(port_name: &str) -> Result<MidiInputPort, Errors> {
     let input = MidiInput::new("midi-tool").map_err(|_| Errors::InitFailure)?;
 
     input
@@ -85,7 +89,7 @@ fn find_input_port(port_name: &str) -> Result<MidiInputPort, Errors> {
         .ok_or(Errors::InvalidSourcePort(port_name.to_string()))
 }
 
-fn find_output_port(port_name: &str) -> Result<MidiOutputPort, Errors> {
+fn find_target_port(port_name: &str) -> Result<MidiOutputPort, Errors> {
     let output = MidiOutput::new("midi-tool").map_err(|_| Errors::InitFailure)?;
 
     output
