@@ -17,19 +17,21 @@ hopefully the target device makes noises!
 
 Compile with `cargo build --release` and run the binary from the target.
 
-### **List MIDI Ports**
-```sh
-midi-tool list
 ```
-Shows all available MIDI input/output ports.
+$ midi-tool help
+MIDI CLI tool
 
-### **Route MIDI Messages**
-```sh
-midi-tool route --source-name "MIDI Controller" --target-name "Synth"
+Usage: midi-tool <COMMAND>
+
+Commands:
+  list     List available MIDI ports
+  route    Route MIDI messages
+  monitor  Monitor incoming MIDI messages
+  help     Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help  Print help
 ```
-Forwards MIDI data between two devices.
-
-**Tip:** If your port names have spaces, wrap them in quotes.
 
 ## Plan
 
@@ -41,11 +43,15 @@ considering at the moment - keeping in mind this is a learning project:
 - Port aliasing to work around platform-dependent MIDI port names, making
   scripts portable across machines. See [docs/port-naming.md](docs/port-naming.md).
 
+- Filtering forwarded messages by type, channel, and message transformation options.
+
+- Automated tests.
+
 - An interactive mode, with maybe a ncurses-based TUI (do people still
   use that these days?) where you can just navigate with the keyboard to
   create routings.
 
-- Multithreading so the same process can forward multiple active routes
+- Multithreading so the same instance can process multiple active routes
   in parallel.
 
 - OS-native frontends for MacOS and Linux (Ghostty-style)
@@ -67,4 +73,4 @@ And on that note, `rustlings` was an invaluable resource to get up to speed.
 
 This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for full details.
 
-Copyright 2025, Nuno Correia (@noon-ng on GitHub)
+Copyright 2025, 2026 Nuno Correia (@noon-ng on GitHub)
